@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BizAgent: Your shop's AI employee, on WhatsApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f0d;
+    --bg-alt: #0f1613;
+    --green: #25D366;
+    --pink: #FF2E8B;
+    --cyan: #00E5FF;
+    --lime: #C6FF00;
+    --text: #F3F6F4;
+    --text-dim: #8FA39A;
+    --card: #121a17;
+    --line: #1e2b26;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+
+  .noise {
+    position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .glow {
+    position: fixed;
+    width: 900px; height: 900px;
+    border-radius: 50%;
+    filter: blur(140px);
+    opacity: 0.16;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow-1 { background: var(--green); top: -300px; left: -200px; }
+  .glow-2 { background: var(--pink); bottom: -200px; right: -250px; opacity: 0.1; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 28px; position: relative; z-index: 2; }
+
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 28px 0;
+  }
+  .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.02em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .logo-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 12px var(--lime); }
+  .nav-cta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--bg);
+    background: var(--lime);
+    padding: 10px 18px;
+    border-radius: 100px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.15s ease;
+  }
+  .nav-cta:hover { transform: scale(1.04); }
+
+  /* HERO */
+  .hero { padding: 64px 0 40px; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    color: var(--green);
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 22px;
+  }
+  .eyebrow::before { content: ''; width: 6px; height: 6px; background: var(--green); border-radius: 50%; display: inline-block; }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(38px, 5vw, 58px);
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    margin-bottom: 22px;
+  }
+  h1 .hl { color: var(--lime); }
+
+  .sub {
+    font-size: 18px;
+    color: var(--text-dim);
+    line-height: 1.55;
+    max-width: 480px;
+    margin-bottom: 34px;
+  }
+
+  .cta-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .btn-primary {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 15.5px;
+    color: var(--bg);
+    background: var(--green);
+    padding: 16px 28px;
+    border-radius: 100px;
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 10px;
+    box-shadow: 0 0 0 0 rgba(37,211,102,0.5);
+    transition: transform 0.15s ease, box-shadow 0.25s ease;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(37,211,102,0.35); }
+  .btn-secondary {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 2px;
+  }
+
+  .trust-line {
+    margin-top: 30px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--text-dim);
+  }
+  .trust-line strong { color: var(--cyan); }
+
+  /* PHONE MOCK */
+  .phone-stage { display: flex; justify-content: center; position: relative; }
+  .phone {
+    width: 320px;
+    background: #050807;
+    border-radius: 38px;
+    border: 3px solid #1b2622;
+    box-shadow: 0 40px 100px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(37,211,102,0.06);
+    overflow: hidden;
+    position: relative;
+  }
+  .phone-notch {
+    height: 26px; display: flex; align-items: center; justify-content: center;
+  }
+  .phone-notch::before {
+    content: ''; width: 90px; height: 16px; background: #050807; border-radius: 0 0 14px 14px;
+  }
+  .phone-head {
+    background: #111c17;
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid #1b2622;
+  }
+  .phone-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--green), var(--cyan));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; color: #05130d;
+  }
+  .phone-name { font-size: 13.5px; font-weight: 600; }
+  .phone-status { font-size: 11px; color: var(--green); }
+
+  .phone-body {
+    background: #0a120f;
+    background-image: radial-gradient(circle at 20% 10%, rgba(37,211,102,0.05), transparent 40%);
+    padding: 16px 14px;
+    height: 358px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 10px;
+    justify-content: flex-end;
+  }
+  .bubble {
+    max-width: 78%;
+    padding: 9px 13px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+  .bubble.in { align-self: flex-start; background: #16211c; border-bottom-left-radius: 4px; }
+  .bubble.out { align-self: flex-end; background: #1f5c3a; border-bottom-right-radius: 4px; }
+  .bubble.typing { align-self: flex-start; background: #16211c; border-bottom-left-radius: 4px; color: var(--text-dim); font-style: italic; }
+  .bubble .tick { font-size: 10px; color: var(--text-dim); display: block; margin-top: 3px; text-align: right; }
+
+  .phone-input-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px;
+    border-top: 1px solid #1b2622;
+    background: #0d1512;
+  }
+  .phone-input {
+    flex: 1;
+    background: #16211c;
+    border: 1px solid #1e2b26;
+    border-radius: 100px;
+    padding: 9px 14px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+  }
+  .phone-input:focus { outline: none; border-color: var(--green); }
+  .phone-send {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--green);
+    border: none;
+    color: #05130d;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .phone-send:disabled { opacity: 0.5; cursor: default; }
+
+  .ledger-chip {
+    align-self: flex-start;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--lime);
+    background: #0d1512;
+    border: 1px solid #21301f;
+    padding: 5px 10px;
+    border-radius: 8px;
+  }
+
+  /* SECTIONS */
+  section { padding: 90px 0; border-top: 1px solid var(--line); }
+  .section-head { max-width: 560px; margin-bottom: 48px; }
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--pink);
+    margin-bottom: 14px;
+  }
+  h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(28px, 3.4vw, 38px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+  .section-body { color: var(--text-dim); font-size: 16px; margin-top: 14px; line-height: 1.6; }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .feat-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 28px 24px;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .feat-card:hover { border-color: var(--green); transform: translateY(-3px); }
+  .feat-icon {
+    width: 40px; height: 40px; border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    margin-bottom: 18px;
+  }
+  .icon-1 { background: rgba(37,211,102,0.12); color: var(--green); }
+  .icon-2 { background: rgba(255,46,139,0.12); color: var(--pink); }
+  .icon-3 { background: rgba(0,229,255,0.12); color: var(--cyan); }
+  .feat-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; margin-bottom: 8px; }
+  .feat-body { color: var(--text-dim); font-size: 14.5px; line-height: 1.55; }
+
+  /* HOW IT WORKS */
+  .how-list { display: flex; flex-direction: column; gap: 0; }
+  .how-item {
+    display: grid; grid-template-columns: 90px 1fr;
+    gap: 24px;
+    padding: 26px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: start;
+  }
+  .how-item:last-child { border-bottom: none; }
+  .how-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--lime);
+    padding-top: 3px;
+  }
+  .how-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 6px; }
+  .how-body { color: var(--text-dim); font-size: 15px; line-height: 1.6; max-width: 560px; }
+  .how-example {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--cyan);
+    background: #0d1512;
+    border: 1px solid #1c2b26;
+    display: inline-block;
+    padding: 6px 11px;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+
+  /* PROBLEMS SOLVED */
+  .problem-grid { display: flex; flex-direction: column; gap: 0; }
+  .problem-row {
+    display: grid;
+    grid-template-columns: 1fr 32px 1fr;
+    align-items: center;
+    gap: 18px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .problem-row:last-child { border-bottom: none; }
+  .problem-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pink);
+    margin-bottom: 6px;
+  }
+  .fix-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 6px;
+  }
+  .problem-text { font-size: 15px; color: var(--text-dim); line-height: 1.5; }
+  .fix-text { font-size: 15px; color: var(--text); line-height: 1.5; font-weight: 500; }
+  .problem-arrow {
+    color: var(--lime);
+    font-size: 18px;
+    text-align: center;
+  }
+
+  /* VISION */
+  .vision-panel {
+    background: linear-gradient(160deg, #10171f, #0a0f0d 60%);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 56px 48px;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+  }
+  .vision-panel::before {
+    content: '';
+    position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 300px;
+    background: var(--cyan);
+    opacity: 0.08;
+    border-radius: 50%;
+    filter: blur(100px);
+  }
+  .vision-panel .section-label { justify-content: center; display: flex; }
+  .vision-panel h2 { max-width: 640px; margin: 0 auto 18px; position: relative; }
+  .vision-body { color: var(--text-dim); font-size: 16px; line-height: 1.7; max-width: 620px; margin: 0 auto; position: relative; }
+  .vision-body strong { color: var(--text); font-weight: 600; }
+
+  @media (max-width: 720px) {
+    .problem-row { grid-template-columns: 1fr; text-align: left; }
+    .problem-arrow { display: none; }
+    .vision-panel { padding: 40px 24px; }
+  }
+
+  /* PRICING */
+  .price-card {
+    background: linear-gradient(160deg, #101a15, #0b1210);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 44px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .price-card::before {
+    content: '';
+    position: absolute; top: -60%; right: -20%;
+    width: 400px; height: 400px;
+    background: var(--green);
+    opacity: 0.08;
+    border-radius: 50%;
+    filter: blur(80px);
+  }
+  .price-amount {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 52px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .price-amount span { font-size: 16px; color: var(--text-dim); font-family: 'Inter'; font-weight: 500; }
+  .price-list { list-style: none; margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .price-list li { color: var(--text-dim); font-size: 14.5px; display: flex; align-items: center; gap: 10px; }
+  .price-list li::before { content: '✓'; color: var(--lime); font-weight: 700; }
+
+  /* FOOTER CTA */
+  .final-cta { text-align: center; padding: 100px 0 60px; }
+  .final-cta h2 { max-width: 620px; margin: 0 auto 30px; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 30px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .price-card { grid-template-columns: 1fr; text-align: left; }
+    .phone-stage { order: -1; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<div class="wrap">
+  <nav>
+    <div class="logo"><span class="logo-dot"></span>BizAgent</div>
+    <a class="nav-cta" id="navTryFree" href="#start">Try it free</a>
+  </nav>
+
+  <section class="hero" style="border-top:none; padding-top:20px;">
+    <div>
+      <div class="eyebrow">Built with Gemini</div>
+      <h1>Your shop's new employee <span class="hl">never sleeps</span>, never asks for salary, and texts on WhatsApp.</h1>
+      <p class="sub">BizAgent logs your sales and expenses, replies to your customers, and sends a plain English report every week, all inside the WhatsApp you already use every day.</p>
+      <div class="cta-row">
+        <a class="btn-primary" id="heroWhatsAppBtn" href="#start">Message BizAgent on WhatsApp →</a>
+        <a class="btn-secondary" href="#how">See how it works</a>
+      </div>
+      <div class="trust-line">Built for small business owners everywhere · Powered by <strong>Gemini</strong></div>
+    </div>
+
+    <div class="phone-stage">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-head">
+          <div class="phone-avatar">BA</div>
+          <div>
+            <div class="phone-name">BizAgent</div>
+            <div class="phone-status">online, this is the real agent</div>
+          </div>
+        </div>
+        <div class="phone-body" id="heroChatLog"></div>
+        <div class="phone-input-row">
+          <input class="phone-input" id="heroChatInput" type="text" placeholder="Sold 5k of rice..." autocomplete="off" />
+          <button class="phone-send" id="heroChatSend" aria-label="Send">→</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="section-head">
+      <div class="section-label">What it actually does</div>
+      <h2>Three jobs. One WhatsApp number.</h2>
+      <p class="section-body">You don't manage a dashboard or fill in forms. You just talk to it, the way you'd talk to staff.</p>
+    </div>
+    <div class="grid-3">
+      <div class="feat-card">
+        <div class="feat-icon icon-1">📒</div>
+        <div class="feat-title">Books that keep themselves</div>
+        <div class="feat-body">Text a sale or expense, send a voice note, or snap a photo of a receipt. Speak in English or Pidgin, whichever comes naturally.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon icon-2">💬</div>
+        <div class="feat-title">A reply for every customer</div>
+        <div class="feat-body">While you're serving customers in person, BizAgent handles the WhatsApp questions: hours, prices, availability.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon icon-3">📈</div>
+        <div class="feat-title">A report every Sunday, and a nudge if you go quiet</div>
+        <div class="feat-body">No spreadsheets. Just a plain-English message telling you what you made, what you spent, and your best day. If a day passes with no activity, BizAgent checks in first.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="section-label">How to start</div>
+      <h2>You're already using the app you need.</h2>
+    </div>
+    <div class="how-list">
+      <div class="how-item">
+        <div class="how-tag">step</div>
+        <div>
+          <div class="how-title">Message the number</div>
+          <div class="how-body">Send "hi" to get started. BizAgent asks for your business name and type, and that's the entire setup.</div>
+          <div class="how-example">"Chidi's Salon, hair salon"</div>
+        </div>
+      </div>
+      <div class="how-item">
+        <div class="how-tag">step</div>
+        <div>
+          <div class="how-title">Text like you normally would</div>
+          <div class="how-body">Every sale, every expense, every receipt photo. Just send it as a message and BizAgent figures out the rest.</div>
+          <div class="how-example">"Sold 5k of rice" · "Spent 2k on transport"</div>
+        </div>
+      </div>
+      <div class="how-item">
+        <div class="how-tag">step</div>
+        <div>
+          <div class="how-title">Get paid clarity, weekly</div>
+          <div class="how-body">Every Sunday, a summary lands in your chat. No login, no app. The numbers come to you.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div class="section-label">The real problems</div>
+      <h2>The same headaches, every small business, every week.</h2>
+      <p class="section-body">These are not hypothetical. They are what actually eats an owner's time and money, and they are exactly what BizAgent is built to handle.</p>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-row">
+        <div>
+          <div class="problem-tag">The problem</div>
+          <div class="problem-text">You're too busy running the shop to sit down and write anything in a book.</div>
+        </div>
+        <div class="problem-arrow">→</div>
+        <div>
+          <div class="fix-tag">What BizAgent does</div>
+          <div class="fix-text">Text it, say it, or photograph it. It's logged the moment you send it.</div>
+        </div>
+      </div>
+      <div class="problem-row">
+        <div>
+          <div class="problem-tag">The problem</div>
+          <div class="problem-text">Customers buy on credit, and a month later nobody remembers who owes what.</div>
+        </div>
+        <div class="problem-arrow">→</div>
+        <div>
+          <div class="fix-tag">What BizAgent does</div>
+          <div class="fix-text">Every debt and every payment is tracked automatically, and you can ask who owes you at any time.</div>
+        </div>
+      </div>
+      <div class="problem-row">
+        <div>
+          <div class="problem-tag">The problem</div>
+          <div class="problem-text">You only find out you're out of stock when a customer is standing in front of you.</div>
+        </div>
+        <div class="problem-arrow">→</div>
+        <div>
+          <div class="fix-tag">What BizAgent does</div>
+          <div class="fix-text">Stock levels update as you sell, and it warns you before you actually run out.</div>
+        </div>
+      </div>
+      <div class="problem-row">
+        <div>
+          <div class="problem-tag">The problem</div>
+          <div class="problem-text">A bank or lender asks for proper records, and all you have is memory and scraps of paper.</div>
+        </div>
+        <div class="problem-arrow">→</div>
+        <div>
+          <div class="fix-tag">What BizAgent does</div>
+          <div class="fix-text">A real monthly statement, ready to download, built from what you already logged.</div>
+        </div>
+      </div>
+      <div class="problem-row">
+        <div>
+          <div class="problem-tag">The problem</div>
+          <div class="problem-text">You're serving a customer in the shop while another one is messaging you on WhatsApp.</div>
+        </div>
+        <div class="problem-arrow">→</div>
+        <div>
+          <div class="fix-tag">What BizAgent does</div>
+          <div class="fix-text">It answers on your behalf, as your business, so nobody is left waiting.</div>
+        </div>
+      </div>
+      <div class="problem-row">
+        <div>
+          <div class="problem-tag">The problem</div>
+          <div class="problem-text">Paying a supplier means digging through old chats to find their account number.</div>
+        </div>
+        <div class="problem-arrow">→</div>
+        <div>
+          <div class="fix-tag">What BizAgent does</div>
+          <div class="fix-text">It keeps a record of who you owe and prepares the payment, you just confirm before anything is sent.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="vision-panel">
+      <div class="section-label">The vision</div>
+      <h2>Built in Lagos. Built for anywhere small business happens.</h2>
+      <p class="vision-body">Every country has millions of shop owners closing their books at midnight, chasing customers who owe them money, and finding out they are out of stock at the worst possible moment. BizAgent started in Lagos because that is where we could put it in front of real shop owners first, <strong>not because the problem stops at any border</strong>. The same WhatsApp message and the same AI agent works whether you are selling rice in Lagos, coffee in Nairobi, or clothes in São Paulo.</p>
+    </div>
+  </section>
+
+  <section id="start">
+    <div class="price-card">
+      <div>
+        <div class="section-label" style="margin-bottom:10px;">Pricing</div>
+        <div class="price-amount">₦5,000<span>/month, per business</span></div>
+        <ul class="price-list">
+          <li>Unlimited sales & expense logging</li>
+          <li>Weekly profit reports</li>
+          <li>Customer reply assistance</li>
+          <li>First 2 weeks free</li>
+        </ul>
+      </div>
+      <a class="btn-primary" id="pricingTrialBtn" href="#start" style="justify-self:start;">Start your free trial →</a>
+    </div>
+  </section>
+
+  <div class="final-cta">
+    <h2>Stop closing your books at midnight.</h2>
+    <a class="btn-primary" id="finalCtaBtn" href="#start">Message BizAgent on WhatsApp →</a>
+  </div>
+
+  <footer>
+    <div>BizAgent, built for small business owners everywhere</div>
+    <div>Build with Gemini XPRIZE 2026</div>
+  </footer>
+</div>
+
+<script>
+  // The two "Message BizAgent on WhatsApp" buttons open real WhatsApp,
+  // for people who want the actual production channel. The hero chat
+  // below is the real agent too, no popup, it is just part of the page,
+  // sitting right next to the features and problem sections.
+  (function wireWhatsAppButtons() {
+    var buttonConfigs = [
+      { id: 'heroWhatsAppBtn', text: 'Hi, I want to set up my business on BizAgent' },
+      { id: 'finalCtaBtn', text: 'Hi, I want to set up my business on BizAgent' }
+    ];
+
+    fetch('/api/config')
+      .then(function (res) { return res.json(); })
+      .then(function (config) {
+        if (!config.whatsappNumber) return;
+        buttonConfigs.forEach(function (cfg) {
+          var el = document.getElementById(cfg.id);
+          if (!el) return;
+          var link = 'https://wa.me/' + config.whatsappNumber + '?text=' + encodeURIComponent(cfg.text);
+          el.setAttribute('href', link);
+          el.setAttribute('target', '_blank');
+          el.setAttribute('rel', 'noopener');
+        });
+      })
+      .catch(function () {
+        // If config can't be reached, these two buttons quietly stay
+        // pointed at #start, they just won't deep link to WhatsApp.
+      });
+  })();
+
+  (function wireHeroChat() {
+    var log = document.getElementById('heroChatLog');
+    var input = document.getElementById('heroChatInput');
+    var sendBtn = document.getElementById('heroChatSend');
+    var started = false;
+    var sending = false;
+
+    function getSessionId() {
+      // Deliberately NOT persisted in localStorage. Every visit to the
+      // landing page should show the same clean, first-time welcome
+      // message, not carry forward someone's old test conversation from
+      // a previous visit in the same browser.
+      if (!window.__bizagentHeroSession) {
+        window.__bizagentHeroSession = 'hero-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+      }
+      return window.__bizagentHeroSession;
+    }
+
+    function addBubble(text, direction) {
+      var el = document.createElement('div');
+      el.className = 'bubble ' + direction;
+      el.textContent = text;
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+      return el;
+    }
+
+    function addDashboardLink(url) {
+      addBubble('Taking you to your dashboard...', 'in');
+      setTimeout(function () {
+        window.location.href = url;
+      }, 1400);
+    }
+
+    async function sendMessage(text) {
+      if (!text.trim() || sending) return;
+      sending = true;
+      addBubble(text, 'out');
+      input.value = '';
+      sendBtn.disabled = true;
+
+      var typingEl = addBubble('typing...', 'typing');
+
+      try {
+        var res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: getSessionId(), message: text })
+        });
+        var data = await res.json();
+        typingEl.remove();
+
+        if (data.text) {
+          addBubble(data.text, 'in');
+        } else if (data.error) {
+          addBubble('The agent had a problem: ' + data.error, 'in');
+        } else {
+          addBubble('No response came back. Please try again.', 'in');
+        }
+
+        if (data.dashboardLink) addDashboardLink(data.dashboardLink);
+      } catch (err) {
+        typingEl.remove();
+        addBubble('Could not reach the agent, check your connection and try again.', 'in');
+      } finally {
+        sending = false;
+        sendBtn.disabled = false;
+      }
+    }
+
+    function startIfNeeded() {
+      if (started) return;
+      started = true;
+      sendMessage('hi');
+    }
+
+    // The chat starts itself the moment someone scrolls it into view,
+    // this is the hero, it should feel alive without waiting to be
+    // clicked open first.
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) startIfNeeded();
+      });
+    }, { threshold: 0.4 });
+    observer.observe(document.querySelector('.phone'));
+
+    sendBtn.addEventListener('click', function () { sendMessage(input.value); });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') sendMessage(input.value);
+    });
+    input.addEventListener('focus', startIfNeeded);
+
+    ['navTryFree', 'pricingTrialBtn'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        startIfNeeded();
+        document.querySelector('.phone').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(function () { input.focus(); }, 500);
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
